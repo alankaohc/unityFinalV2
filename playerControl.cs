@@ -48,6 +48,17 @@ public class playerControl : MonoBehaviour
     public GameObject bear;
     private bool isBear = false;
 
+
+    // mouse raycast
+    public GameObject hintPrefab;
+    public GameObject rockHintPrefab;
+    private List<GameObject> hintQueue = new List<GameObject>();
+ 
+    private int movingDir;
+    private bool isMovingRock;
+    public Material hintMat;
+    public Material pointingHintMat;
+
     void Start()
     {
         // ��l�ƳU����m
@@ -139,7 +150,7 @@ public class playerControl : MonoBehaviour
             step = 21;
             animal = game1;
         }
-        
+
         GameObject game2 = GameObject.FindWithTag("game2");
         if (game2)
         {
@@ -175,7 +186,7 @@ public class playerControl : MonoBehaviour
     }
     private bool move()
     {
-        if (!isMoving && !isBear &&!isKangaroo)
+        if (!isMoving && !isBear && !isKangaroo)
         {
             dy = 0;
             if (x + dx >= 0 && x + dx < x_max && z + dz >= 0 && z + dz < z_max
@@ -192,7 +203,7 @@ public class playerControl : MonoBehaviour
                 {
                     value = dx;
                     StartCoroutine(move_x());
-                    
+
                 }
                 else if (dz != 0)
                 {
@@ -261,7 +272,7 @@ public class playerControl : MonoBehaviour
                 {
                     value = dx;
                     StartCoroutine(jump2_x());
-                }else if(dz != 0)
+                } else if (dz != 0)
                 {
                     value = dz;
                     StartCoroutine(jump2_z());
@@ -293,12 +304,12 @@ public class playerControl : MonoBehaviour
                 z += dz;
                 transform.rotation = Quaternion.Euler(0.0f, theta, 0.0f);
                 //transform.position += new Vector3((float)dx, (float)dy, (float)dz);
-                if (dx!=0)
+                if (dx != 0)
                 {
                     value = dx;
                     StartCoroutine(fall1_x(Mathf.Abs(dy)));
                 }
-                else if(dz!=0){
+                else if (dz != 0) {
                     value = dz;
                     StartCoroutine(fall1_z(Mathf.Abs(dy)));
                 }
@@ -310,7 +321,7 @@ public class playerControl : MonoBehaviour
     }
     private bool poop()
     {
-        if (!isMoving && !isBear &&!isKangaroo)
+        if (!isMoving && !isBear && !isKangaroo)
         {
             if (poop_num >= poopMaxNum) return false;
             GameObject prefab = Instantiate(CubePoop, transform.position, Quaternion.identity);
@@ -341,11 +352,18 @@ public class playerControl : MonoBehaviour
                 && field[x + dx * 2, y, z + dz * 2] == Element.Empty
                 )
             {
+                print("dx->"+dx);
+                print("dz->"+dz);
+
+                print("2->"+field[x + dx * 2, y, z + dz * 2]);
+                print("inddorr");
                 if (field[x + dx * 2, y - 1, z + dz * 2] != Element.Cube
                 && field[x + dx * 2, y - 2, z + dz * 2] != Element.Cube) { rock_dy = -2; }
                 Debug.Log(dy);
                 RaycastHit hit;
-                if (!Physics.Raycast(transform.position, new Vector3((float)dx, (float)dy, (float)dz), out hit, Mathf.Infinity))
+                LayerMask mask;
+                mask = ~(1 << 6);
+                if (!Physics.Raycast(transform.position, new Vector3((float)dx, (float)dy, (float)dz), out hit, Mathf.Infinity, mask))
                 {
                     print("raycasthit error");
                 }
@@ -368,7 +386,7 @@ public class playerControl : MonoBehaviour
                     hit.collider.transform.position += new Vector3((float)dx, (float)dy + rock_dy, (float)dz);
                     StartCoroutine(WaitSecond_bear());
                 }
-                else if(rock_dy == 0) {
+                else if (rock_dy == 0) {
                     if (dx != 0)
                     {
                         value = dx;
@@ -392,22 +410,22 @@ public class playerControl : MonoBehaviour
     }
     private bool getMoveKey()
     {
-        if (Input.GetKeyDown(KeyCode.W))
+        if (Input.GetKeyDown(KeyCode.W) || (Input.GetMouseButtonDown(0) && movingDir == 0))
         {
             dx = 1; dz = 0; theta = 90.0f;
             return true;
         }
-        else if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S) || (Input.GetMouseButtonDown(0) && movingDir == 1))
         {
             dx = -1; dz = 0; theta = 270.0f;
             return true;
         }
-        else if (Input.GetKeyDown(KeyCode.A))
+        else if (Input.GetKeyDown(KeyCode.A) || (Input.GetMouseButtonDown(0) && movingDir == 2))
         {
             dx = 0; dz = 1; theta = 0.0f;
             return true;
         }
-        else if (Input.GetKeyDown(KeyCode.D))
+        else if (Input.GetKeyDown(KeyCode.D) || (Input.GetMouseButtonDown(0) && movingDir == 3))
         {
             dx = 0; dz = -1; theta = 180.0f;
             return true;
@@ -417,7 +435,7 @@ public class playerControl : MonoBehaviour
     }
     private void detectWin()
     {
-        if(gameObject.transform.position == endpoint.transform.position)
+        if (gameObject.transform.position == endpoint.transform.position)
         {
             GameObject isActive = GameObject.FindWithTag("picture");
             if (isActive != null)
@@ -454,7 +472,7 @@ public class playerControl : MonoBehaviour
         isMoving = true; // �����Ĳ�o
         animator.SetBool("move", isMoving);
         float startValue = transform.position.x;
-        float endValue = transform.position.x+value;
+        float endValue = transform.position.x + value;
         float duration = 1f; // �����L�窺�ɶ�
         float elapsed = 0f;
         while (elapsed < duration)
@@ -476,7 +494,7 @@ public class playerControl : MonoBehaviour
         isMoving = true; // �����Ĳ�o
         animator.SetBool("move", isMoving);
         float startValue = transform.position.z;
-        float endValue = transform.position.z+value;
+        float endValue = transform.position.z + value;
         float duration = 1f; // �����L�窺�ɶ�
         float elapsed = 0f;
 
@@ -514,7 +532,7 @@ public class playerControl : MonoBehaviour
         {
             elapsed += Time.deltaTime;
 
-            value_y = Mathf.Lerp(startValue_y, endValue_y-0.2f, elapsed / duration);
+            value_y = Mathf.Lerp(startValue_y, endValue_y - 0.2f, elapsed / duration);
 
             transform.position = new Vector3(transform.position.x, value_y, transform.position.z);
 
@@ -584,7 +602,7 @@ public class playerControl : MonoBehaviour
         float startValue_x = transform.position.x;
         float endValue_x = transform.position.x + value;
         float startValue_y = transform.position.y;
-        float endValue_y = transform.position.y -dy;
+        float endValue_y = transform.position.y - dy;
 
         float duration = 1f; // �����L�窺�ɶ�
         float elapsed = 0f;
@@ -628,7 +646,7 @@ public class playerControl : MonoBehaviour
         float startValue_z = transform.position.z;
         float endValue_z = transform.position.z + value;
         float startValue_y = transform.position.y;
-        float endValue_y = transform.position.y -dy;
+        float endValue_y = transform.position.y - dy;
 
         float duration = 1f; // �����L�窺�ɶ�
         float elapsed = 0f;
@@ -680,21 +698,21 @@ public class playerControl : MonoBehaviour
     }
     public void jump2Button()
     {
-        if( !isKangaroo && jump2_num < Jump2MaxNum)
+        if (!isKangaroo && jump2_num < Jump2MaxNum)
         {
             isKangaroo = true;
-            transform.localScale = new Vector3(0.01f,0.01f,0.01f);
+            transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             kangaroo.SetActive(true);
             kangaroo.transform.position = transform.position;
             kangaroo.transform.rotation = transform.rotation;
-        }else if(isKangaroo) {
+        } else if (isKangaroo) {
             isKangaroo = false;
             transform.localScale = new Vector3(1f, 1f, 1f);
             kangaroo.SetActive(false);
         }
 
 
-        }
+    }
     private IEnumerator jump2_x() {
         isMoving = true; // �����Ĳ�o
         //kangaroo_animator.SetBool("jump", isMoving);
@@ -723,7 +741,7 @@ public class playerControl : MonoBehaviour
         transform.position = new Vector3(endValue_x, transform.position.y, transform.position.z);
 
         StartCoroutine(WaitSecond_kangaroo());
-        
+
 
         isMoving = false;
         //kangaroo_animator.SetBool("jump", isMoving);
@@ -771,13 +789,12 @@ public class playerControl : MonoBehaviour
             bear.SetActive(true);
             bear.transform.position = transform.position;
             bear.transform.rotation = transform.rotation;
-        }else if (isBear)
+        } else if (isBear)
         {
             isBear = false;
             transform.localScale = new Vector3(1f, 1f, 1f);
             bear.SetActive(false);
         }
-
     }
     private IEnumerator moveRock_x(RaycastHit hit)
     {
@@ -831,10 +848,207 @@ public class playerControl : MonoBehaviour
         StartCoroutine(WaitSecond_bear());
         isMoving = false;
     }
+    private void nextStepHint()
+    {
+        // clear previous hintQueue
+        if (hintQueue.Count > 0)
+        {
+            foreach (var tmp in hintQueue)
+            {
+                Destroy(tmp);
+            }
+        }
+        hintQueue.Clear();
+
+        int dx, dy, dz = 0; // 歸零
+        int[,] offset = { {-1, 0},
+                          { 1, 0},
+                          { 0,-1},
+                          { 0, 1} };
+
+        if (!isMoving && !isKangaroo && !isBear)
+        {
+            // move
+            for (int i = 0; i < 4; i++)
+            {
+                dx = offset[i, 0]; dz = offset[i, 1];
+                if (x + dx >= 0 && x + dx < x_max && z + dz >= 0 && z + dz < z_max
+                && y - 1 >= 0
+                && field[x + dx, y, z + dz] == Element.Empty
+                && (field[x + dx, y - 1, z + dz] == Element.Cube || field[x + dx, y - 1, z + dz] == Element.Rock))
+                {
+                    GameObject tmp = Instantiate(hintPrefab, new Vector3(x + dx, y - 1, z + dz), Quaternion.identity);
+                    //print("move hint: (" + (x + dx) + ", " + (y - 1) + ", " + (z + dz) + ")");
+                    hintQueue.Add(tmp);
+                }
+            }
+            // jump 1 level
+            dx = 0; dy = 0; dz = 0; // 歸零
+            for (int i = 0; i < 4; i++)
+            {
+                dx = offset[i, 0]; dz = offset[i, 1];
+                if (x + dx >= 0 && x + dx < x_max && z + dz >= 0 && z + dz < z_max
+                && y + 1 < y_max
+                && (field[x + dx, y, z + dz] == Element.Cube || field[x + dx, y, z + dz] == Element.Rock)
+                && field[x + dx, y + 1, z + dz] == Element.Empty)
+                {
+                    GameObject tmp = Instantiate(hintPrefab, new Vector3(x + dx, y, z + dz), Quaternion.identity);
+                    //print("jump 1 level hint: (" + (x + dx) + ", " + (y) + ", " + (z + dz) + ")");
+                    hintQueue.Add(tmp);
+                }
+            }
+            // fall
+            dx = 0; dy = 0; dz = 0; // 歸零
+            for (int i = 0; i < 4; i++)
+            {
+                dx = offset[i, 0]; dz = offset[i, 1];
+                if (x + dx >= 0 && x + dx < x_max && z + dz >= 0 && z + dz < z_max
+                    && y - 1 >= 0
+                    && field[x + dx, y, z + dz] == Element.Empty
+                    && field[x + dx, y - 1, z + dz] == Element.Empty)
+                {
+                    int next_y = y;
+                    while (next_y >= 0 && field[x + dx, next_y, z + dz] == 0) next_y--;
+                    GameObject tmp = Instantiate(hintPrefab, new Vector3(x + dx, next_y, z + dz), Quaternion.identity);
+                    //print("fall hint: (" + (x + dx) + ", " + (next_y) + ", " + (z + dz) + ")");
+                    hintQueue.Add(tmp);
+                }
+            }
+        }
+
+        if (!isMoving && isKangaroo)
+        {
+            // jump 2 levels
+            dx = 0; dy = 0; dz = 0; // 歸零
+            for (int i = 0; i < 4; i++)
+            {
+                dx = offset[i, 0]; dz = offset[i, 1];
+                if (x + dx >= 0 && x + dx < x_max && z + dz >= 0 && z + dz < z_max
+                    && y + 1 < y_max
+                    && y + 2 < y_max
+                    && (field[x + dx, y, z + dz] == Element.Cube || field[x + dx, y, z + dz] == Element.Rock)
+                    && (field[x + dx, y + 1, z + dz] == Element.Cube || field[x + dx, y + 1, z + dz] == Element.Rock)
+                    && y + 2 < y_max && field[x + dx, y + 2, z + dz] == Element.Empty)
+                {
+                    GameObject tmp = Instantiate(hintPrefab, new Vector3(x + dx, y + 1, z + dz), Quaternion.identity);
+                    //print("jump 2 level hint: (" + (x + dx) + ", " + (y + 1) + ", " + (z + dz) + ")");
+                    hintQueue.Add(tmp);
+                }
+            }
+        }
+
+        if (!isMoving && isBear)
+        {
+            // rock
+            dx = 0; dy = 0; dz = 0; // 歸零
+            for (int i = 0; i < 4; i++)
+            {
+                dx = offset[i, 0]; dz = offset[i, 1];
+                dy = 0;
+                float rock_dy = 0;
+                if (x + dx >= 0 && x + dx < x_max && z + dz >= 0 && z + dz < z_max
+                    && x + dx * 2 >= 0 && x + dx * 2 < x_max && z + dz * 2 >= 0 && z + dz * 2 < z_max
+                    && y - 1 >= 0
+                    && field[x + dx, y, z + dz] == Element.Rock
+                    && field[x + dx * 2, y, z + dz * 2] == Element.Empty
+                    )
+                {
+                    GameObject tmp = Instantiate(rockHintPrefab, new Vector3(x + dx, y, z + dz), Quaternion.identity);
+                    //print("rock hint: (" + (x + dx) + ", " + (y) + ", " + (z + dz) + ")");
+                    hintQueue.Add(tmp);
+
+                }
+
+            }
+        }
+
+
+
+
+
+
+    }
+    public void getMovingInfo()
+    {
+        Ray ray;
+        RaycastHit hit;
+        Camera playerCamera = Camera.main;
+        LayerMask mask;
+
+        mask = 1 << 6;
+        ray = playerCamera.ScreenPointToRay(Input.mousePosition);
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (Physics.Raycast(ray, out hit, 100, mask))
+            {
+                Vector3 hintPos;
+                if (hit.transform.name == "rockHintPrefab(Clone)")
+                {
+                    hintPos = hit.transform.position;
+                    isMovingRock = true;
+                }
+                else
+                {
+                    hintPos = hit.transform.position + new Vector3(0f, 0.5f, 0f);
+                }
+
+                if (hintPos.x - x == 1.0f)
+                {
+                    movingDir = 0;
+                    print("mouseHint: " + movingDir);
+                }
+                if (hintPos.x - x == -1.0f)
+                {
+                    movingDir = 1;
+                    print("mouseHint: " + movingDir);
+                }
+                if (hintPos.z - z == 1.0f)
+                {
+                    movingDir = 2;
+                    print("mouseHint: " + movingDir);
+                }
+                if (hintPos.z - z == -1.0f)
+                {
+                    movingDir = 3;
+                    print("mouseHint: " + movingDir);
+                }
+            }
+        }
+    }
+    public void resetMovingInfo()
+    {
+        movingDir = -1;
+        isMovingRock = false;
+    }
+    public void detactPointing()
+    {
+        Ray ray;
+        RaycastHit hit;
+        Camera playerCamera = Camera.main;
+        LayerMask mask;
+
+        mask = 1 << 6;
+        ray = playerCamera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out hit, 100, mask))
+        {
+            print(hit.transform.name);
+            if (hit.transform.tag == "Hint")
+            {
+                Renderer renderer = hit.transform.gameObject.GetComponent<Renderer>();
+                renderer.material = pointingHintMat;
+                print("Hint");
+            }
+        }
+    }
+
     void Update()
     {
-        if (getMoveKey() && Input.GetKey(KeyCode.O))
+        nextStepHint();
+        getMovingInfo();
+        detactPointing();
+        if (getMoveKey() && (Input.GetKey(KeyCode.O) || isMovingRock))
         {
+           
             if (move_rock())
             {
                 audioSource.clip = specialSound;
@@ -845,10 +1059,10 @@ public class playerControl : MonoBehaviour
         }
         else if (getMoveKey())
         {
+            
             print("MoveMoveMove");
             if (move())
             {
-                
                 audioSource.clip = moveSound;
                 audioSource.Play();
                 print("move");
@@ -879,6 +1093,7 @@ public class playerControl : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.P))
         {
+            getMovingInfo();
             if (poop())
             {
                 print("poop");
@@ -886,6 +1101,7 @@ public class playerControl : MonoBehaviour
             }
 
         }
+        resetMovingInfo();
         detectSave();
         detectWin();
         deteceGameover();
